@@ -1,3 +1,5 @@
+//https://dev.to/walpolea/through-the-pipeline-an-exploration-of-front-end-bundlers-ea1
+
 const esbuild = require('esbuild');
 //const sassPlugin = require('esbuild-plugin-sass');
 const chokidar = require('chokidar');
@@ -8,20 +10,17 @@ const build = async () => {
 	const service = await esbuild.startService();
 	try {
 		const timerStart = Date.now();
-
-		// Build code
 		await service.build({
 			entryPoints: ['css/styles.css', 'js/bundle.js'],
 			format: 'iife',
-			//plugins: [sassPlugin()],
+			// plugins: [sassPlugin()],
 			bundle: true,
 			minify: true,
 			outdir: 'build',
 			sourcemap: true,
-			//this stops esbuild from trying to resolve these things in css, may need to add more types
+			// stops esbuild from trying to resolve these things in css, may need to add more types
 			external: ['*.woff2', '*.svg', '*.jpg', '*.png'],
 		});
-
 		const timerEnd = Date.now();
 		console.log(`Done! Built in ${timerEnd - timerStart}ms.`);
 	} catch (error) {
@@ -31,27 +30,25 @@ const build = async () => {
 	}
 };
 
-//watch it?
+// watch it?
 if (process.argv.includes('--watch')) {
-	//chokidar will watch theme files for changes to trigger rebuild
-	const watcher = chokidar.watch(['js/**/*.js', 'css/**/*.scss', '**/*.php']);
+	// chokidar will watch theme files for changes to trigger rebuild
+	const watcher = chokidar.watch(['js/*.js', 'css/*.css', '**/*.php']);
 	console.log('Watching files... \n');
-
-	//first build
+	// first build:
 	build();
-	//build on changes
+	// build on changes
 	watcher.on('change', () => {
 		build();
 	});
-
-	//browserSync will trigger livereload when build files are updated
+	// browserSync will trigger livereload when build files are updated
 	browserSync.init({
-		//TODO: make these values passed in by `npm run dev`
+		// TODO: make these values passed in by `npm run dev`
 		port: 3334,
 		proxy: 'localhost:3333',
-		files: ['assets/build/*'],
+		files: ['build/*'],
 	});
 } else {
-	//no watch flag, just build it and be done
+	// no watch flag, just build it and be done
 	build();
 }
