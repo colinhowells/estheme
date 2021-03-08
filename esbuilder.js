@@ -1,7 +1,7 @@
-//https://dev.to/walpolea/through-the-pipeline-an-exploration-of-front-end-bundlers-ea1
+// https://dev.to/walpolea/through-the-pipeline-an-exploration-of-front-end-bundlers-ea1
 
 const esbuild = require('esbuild');
-//const sassPlugin = require('esbuild-plugin-sass');
+const sassPlugin = require('esbuild-plugin-sass');
 const chokidar = require('chokidar');
 const browserSync = require('browser-sync').create();
 
@@ -11,12 +11,14 @@ const build = async () => {
 	try {
 		const timerStart = Date.now();
 		await service.build({
-			entryPoints: ['css/styles.css', 'js/bundle.js'],
+			entryPoints: ['js/index.js'],
+			// entryPoints: ['css/styles.css', 'js/bundle.js'], // if we were to do css and not sass
 			format: 'iife',
-			// plugins: [sassPlugin()],
+			plugins: [sassPlugin()],
 			bundle: true,
 			minify: true,
-			outdir: 'build',
+			//outdir: 'build',
+			outfile: 'build/estheme-bundle.js',
 			sourcemap: true,
 			// stops esbuild from trying to resolve these things in css, may need to add more types
 			external: ['*.woff2', '*.svg', '*.jpg', '*.png'],
@@ -30,7 +32,7 @@ const build = async () => {
 	}
 };
 
-// watch it?
+// watch it? (`npm run dev` will watch)
 if (process.argv.includes('--watch')) {
 	// chokidar will watch theme files for changes to trigger rebuild
 	const watcher = chokidar.watch(['js/*.js', 'css/*.css', '**/*.php']);
@@ -44,8 +46,8 @@ if (process.argv.includes('--watch')) {
 	// browserSync will trigger livereload when build files are updated
 	browserSync.init({
 		// TODO: make these values passed in by `npm run dev`
-		port: 3334,
-		proxy: 'localhost:3333',
+		port: 8001,
+		proxy: 'localhost:8000',
 		files: ['build/*'],
 	});
 } else {

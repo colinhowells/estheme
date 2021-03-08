@@ -1,5 +1,5 @@
 <?php
 get_header();
-echo '<h1>Hi there</h1>';
+echo '<main><h1 id="greeting">Hi there</h1></main>';
 get_footer(); 
 ?>
