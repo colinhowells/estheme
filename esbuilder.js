@@ -1,29 +1,51 @@
-const { build, cliopts } = require('estrella'); // https://github.com/rsms/estrella
-const { sassPlugin } = require('esbuild-sass-plugin'); // https://github.com/glromeo/esbuild-sass-plugin
-const notifier = require('node-notifier'); // https://github.com/madhums/node-notifier
+#!/usr/bin/env node
+const { build, watch } = require('estrella'); // https://github.com/rsms/estrella
+const { sassPlugin } = require('esbuild-sass-plugin'); // https://github.com/glromeo/esbuild-sass-pluginin
 
-build({
-	entry: 'js/index.js',
-	external: ['*.woff2', '*.svg', '*.jpg', '*.png'],
-	plugins: [sassPlugin()],
-	// target: ['chrome58', 'firefox57', 'safari11', 'edge16'],
+const DEV = 'development' == process.env.NODE_ENV ? true : false;
+
+const pluginCache = new Map();
+
+const common = {
 	bundle: true,
-	minify: true,
-	sourcemap: true,
-	outfile: 'build/estheme-bundle.js',
-	onEnd(config, result) {
-		config.watch &&
-			notifier.notify({
-				title: config.title,
-				message:
-					result.errors.length > 0
-						? `Build failed with ${result.errors.length} errors`
-						: `Build succeeded`,
-			});
-	},
+	minify: !DEV,
+	watch: DEV,
+	incremental: DEV,
+	sourcemap: DEV && 'inline',
+	debug: DEV,
+};
+build({
+	...common,
+	entry: 'js/index.js',
+	outfile: 'build/bundle.mjs',
+	format: 'esm',
+});
+build({
+	...common,
+	entry: 'js/index.js',
+	outfile: 'build/legacy.js',
+	format: 'iife',
+	target: ['es5'],
 });
 
-cliopts.watch &&
+const sassOptions = {
+	...common,
+	entry: 'scss/styles.scss',
+	outfile: 'build/styles.css',
+	plugins: [
+		sassPlugin({
+			cache: pluginCache,
+		}),
+	],
+};
+build(sassOptions);
+
+if (DEV) {
 	require('serve-http').createServer({
 		port: 8181,
 	});
+	// our sass plugin requires that we watch the path manually
+	watch('scss/styles.scss', {}, function () {
+		build(sassOptions);
+	});
+}
